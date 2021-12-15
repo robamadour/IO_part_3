@@ -778,6 +778,9 @@ ValuesToIndexExclCompliance <- function(x){
   return(i)
 }
 
+# Transition matrices from omega_tilde to omega. There are four possible transitions
+# with and without investment, and DAVgrid above and below the actual DAV.
+# This transition matrix is the same for each omega1
 InvestmentTransitionMatrices <- function(params){
   N1 <- params$N1
   paramsBellman <- params$BellmanParams
@@ -803,6 +806,8 @@ InvestmentTransitionMatrices <- function(params){
   return(params)
 }
 
+# Transition from omega to the next omega_tilde. Transition probabilities
+# depend on the regulator CCPs. We compute a transition matrix for each oemga1
 CCPTransitionMatrix <- function(params){
   N1 <- params$N1
   paramsBellman <- params$BellmanParams
@@ -833,6 +838,7 @@ CCPTransitionMatrix <- function(params){
   return(params)
 }
 
+# Given a value of omega1, return the corresponding NAICS, region and gravity
 GetOmega1Mapping <- function(params){
   N1 <- params$N1
   n_omega1 <- params$n_omega1
@@ -842,18 +848,22 @@ GetOmega1Mapping <- function(params){
   return(params)
 }
 
+# Add transition matrices to the params structure
 AddTransitionParams <- function(params){
   params <- InvestmentTransitionMatrices(params)
   params <- CCPTransitionMatrix(params)
   return(params)
 }
 
+# Helper function. Returns the N1 first states from vec
 RetainN1States <- function(vec,nstates,N1,N2,o1){
   vec <- matrix(vec,nstates,N2)
   vec <- vec[((o1-1)*N1+1):(N1*o1),]
   return(vec)
 }
 
+# Given omega1, compute the transition probability fron one omega_tilde
+# to the next omega_tilde
 GetTransitionProb <- function(params,omega1,InvProb){
   N1 <- params$N1
   InvProb <- InvProb[(N1*(omega1-1)+1):(N1*omega1)]
@@ -862,6 +872,8 @@ GetTransitionProb <- function(params,omega1,InvProb){
   return(P)
 }
 
+# Given the transition matrices, compute the transition probability matrix 
+# fron one omega_tilde to the next omega_tilde
 GetTransitionProbOmega1 <- function(params,InvProb,C){
   N1 <- params$N1
   D <- diag(c(InvProb))
@@ -869,6 +881,7 @@ GetTransitionProbOmega1 <- function(params,InvProb,C){
   return(P)
 }
 
+# Check results with the provided file
 CompareTransitionProb <- function(P_omega1_BGL,ExpectedResult1,params){
   expectedResults <- read.csv(ExpectedResult1)
   N1 <- params$N1
@@ -897,6 +910,7 @@ CompareTransitionProb <- function(P_omega1_BGL,ExpectedResult1,params){
     geom_line()
 }
 
+# Prepare answer for question 1 in problem 3
 Question_P3Q1 <- function(P_omega1_BGL,file,params){
   N1 <- params$N1
   state <- c(1,1,1,2,5)
@@ -914,6 +928,7 @@ Question_P3Q1 <- function(P_omega1_BGL,file,params){
   write.csv(results,file, row.names = FALSE)
 }
 
+# Compute the steady state distribution given the transition matrix P
 SolveSS <- function(P,params){
   N1 <- params$N1
 
@@ -925,6 +940,7 @@ SolveSS <- function(P,params){
   return(as.matrix(pi))
 }
 
+# Check the results with the provided file
 CompareSS <- function(piSS,ExpectedResult,params){
   expectedResults <- read.csv(ExpectedResult)
   N1 <- params$N1
@@ -953,6 +969,7 @@ CompareSS <- function(piSS,ExpectedResult,params){
     geom_line()
 }
 
+# Prepare solution to question 2 in problem 3
 Question_P3Q2 <- function(piSS,outFile,params){
 
   N1 <- params$N1
@@ -973,6 +990,7 @@ Question_P3Q2 <- function(piSS,outFile,params){
   write.csv(results,outFile, row.names = FALSE)
 }
 
+# Compute the sets of model moments given a parameter
 ComputeMoments <- function(coeff, params,V0){
   
   n_omega1 <- params$n_omega1
@@ -995,7 +1013,11 @@ ComputeMoments <- function(coeff, params,V0){
   for (o1 in 1:n_omega1){
     P <- GetTransitionProb(params,o1,invProb)
     piSS <- SolveSS(P,params)
+    
+    # moment 1: steady state distribution
     moments1[((o1-1)*N1+1):(o1*N1),1] <- piSS
+    
+    # moment 2: probabi;ity of investment in steady state distribution
     m2 <- piSS*invProb[((o1-1)*N1+1):(o1*N1),1]
     moments2[((o1-1)*(N1-1)+1):(o1*(N1-1)),1] <- m2[2:N1,1]
   }
@@ -1003,10 +1025,10 @@ ComputeMoments <- function(coeff, params,V0){
   out$moments <- rbind(moments1,moments2)
   out$V0 <- bellmanSol$NewV
   
-  
   return(out)
 }
 
+# Retrieve the omega_tilde state for all the moments
 GetStatesForMoments <- function(params){
   
   n_omega1 <- params$n_omega1
@@ -1027,6 +1049,7 @@ GetStatesForMoments <- function(params){
   return(mstates)
 }
 
+# Check the results with the provided file
 CompareMoments <- function(moments,ExpectedResult,params){
   library(tidyr)
   library(ggplot2)
@@ -1089,6 +1112,7 @@ CompareMoments <- function(moments,ExpectedResult,params){
     geom_line()
 }
 
+# Prepare solution to question 3 in part 3
 Question_P3Q3 <- function(parameterGrid,params,file){
   Nparams <- 10
   results <- matrix(0,Nparams,5+3)
@@ -1115,6 +1139,7 @@ Question_P3Q3 <- function(parameterGrid,params,file){
   write.csv(results,file,row.names = FALSE)
 }
 
+# Do DAV interpolation
 GetDAVInterpolation <- function(params,DAV){
   DAVgrid <- params$DAVgrid  # retrieve DAV grid
   npointsDAV  <- length(DAVgrid) # number of points in the grid
@@ -1135,6 +1160,7 @@ GetDAVInterpolation <- function(params,DAV){
   return(out)
 }
 
+# Compute data moments
 ComputeDataMoments <- function(params){
   N1 <- params$N1
   n_omega1 <- params$n_omega1
@@ -1185,6 +1211,7 @@ ComputeDataMoments <- function(params){
   return(moments)
 }
 
+# Check results with the provided file
 CompareDataMoments <- function(moments,ExpectedResult,params){
   library(tidyr)
   library(ggplot2)
@@ -1245,6 +1272,7 @@ CompareDataMoments <- function(moments,ExpectedResult,params){
     geom_line()
 }
 
+# Prepare solution to question 4, part 3
 Question_P3Q4 <- function(dataMoments,params,file){
   Nparams <- 10
   results <- matrix(0,1,3)
@@ -1257,6 +1285,7 @@ Question_P3Q4 <- function(dataMoments,params,file){
   write.csv(results,file,row.names = FALSE)
 }
 
+# Prepare solution to question 5, part 3
 GenerateMomentFiles <- function(parameterGrid,dataMoment,params,file1,file2){
   Nparams <- 500
   Nmoments <- 14445

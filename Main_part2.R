@@ -6,8 +6,7 @@
 
 
 # Set working directories
-#current_dir <- "./IO_partII"
-current_dir <- "G:/Mi unidad/Columbia_doc/My Classes/IO I/Assignment/final_version/IO_partII/"
+current_dir <- "./IO_part_3"
 setwd(current_dir)
 
 outputs_dir <- paste0(current_dir,"Outputs")

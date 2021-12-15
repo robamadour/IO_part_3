@@ -1,15 +1,13 @@
 # Author: Roberto Zuniga
-# Date: November 12, 2021
+# Date: December 14, 2021
 # Description: This script partially replicates Blunder, Gowrisankaran and Blundell
-# (2020). Specifically, It solver the Bellman equation and computes the nested
-# fixed point estimator.
+# (2020). Specifically, It implements the random coefficients estimator.
 
 library(tidyr)
 library(ggplot2)
 
 # Set working directories
-#current_dir <- "./IO_partII"
-current_dir <- "G:/Mi unidad/Columbia_doc/My Classes/IO I/Assignment/final_version/IO_partII/"
+current_dir <- "./IO_part_3"
 setwd(current_dir)
 
 outputs_dir <- paste0(current_dir,"Outputs")
